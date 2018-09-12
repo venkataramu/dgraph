@@ -11,7 +11,7 @@ import io.grpc.ManagedChannelBuilder;
  * 
  */
 public class DgraphConnection {
-	private static final String HOSTNAME = "172.26.24.131";
+	private static final String HOSTNAME = "localhost";
 	private static final int PORT = 9080;
 	DgraphClient graphClient  = null;
 	
