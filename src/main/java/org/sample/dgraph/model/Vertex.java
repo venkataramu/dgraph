@@ -14,6 +14,12 @@ public class Vertex {
 	String uid;
 	List<Vertex> all;
 	
+	public Vertex(String id, String sourceType) {
+		this.id = id;
+		this.sourceType = sourceType;
+		this.uid = "_:"+id;
+	}
+	
 	public Vertex(String id, String sourceType, String uid) {
 		this.id = id;
 		this.sourceType = sourceType;
