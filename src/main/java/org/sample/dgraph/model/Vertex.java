@@ -1,6 +1,5 @@
 package org.sample.dgraph.model;
 
-import java.util.List;
 
 /**
  * @author Venkata Ramu Kandulapati
@@ -12,7 +11,6 @@ public class Vertex {
 	String name;
 	String ipAddress;
 	String uid;
-	List<Vertex> all;
 	
 	public Vertex(String id, String sourceType) {
 		this.id = id;
@@ -54,5 +52,15 @@ public class Vertex {
 	public void setIpAddress(String ipAddress) {
 		this.ipAddress = ipAddress;
 	}
+
+	public String getUid() {
+		return uid;
+	}
+
+	public void setUid(String uid) {
+		this.uid = uid;
+	}
+	
+	
 	
 }

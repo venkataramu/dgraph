@@ -5,9 +5,15 @@ import io.dgraph.DgraphProto.Response;
 import io.dgraph.Transaction;
 
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.sample.dgraph.model.Vertex;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 /**
  * @author Venkata Ramu Kandulapati
@@ -39,12 +45,19 @@ public class DgraphLoader {
 			String query = "query vertexLoad($a: string){\n"+ "vertexLoad(func: eq(id, $a)) {\n" + "  id\n uid\n sourceType\n" +" }\n" + "}";
 			Map<String, String> vars = Collections.singletonMap("$a", vertex.getId());
 			Response response =  txn.queryWithVars(query, vars);
-			response.getJson().toString();
-		 /*Mutation mu =
-		     Mutation.newBuilder().setSetNquads(ByteString.copyFromUtf8(String.format("<%s> <Ntopology> <0x7542> .", "0x7540"))).build();*/
-					
-		/*Mutation mu =
-		   Mutation.newBuilder().setSetNquads(ByteString.copyFromUtf8(String.format("_:%s <Ntopology> _:%s .",))).build();*/
+			Gson gson = new Gson();
+			JsonElement jsonElement = gson.fromJson(response.getJson().toStringUtf8(), JsonElement.class);
+			if(jsonElement != null) {
+				JsonObject jsonObj = jsonElement.getAsJsonObject();
+				JsonElement jsonElements = jsonObj.get("vertexLoad");
+				JsonArray array = jsonElements.getAsJsonArray();
+				Iterator iterator = array.iterator();
+				while (iterator.hasNext()) {
+					JsonElement initialVertex = (JsonElement) iterator.next();
+					Vertex innerVertex = gson.fromJson(initialVertex, Vertex.class);
+					return innerVertex.getUid();
+				}
+			}
 			return null;
 		} catch(Exception e) {
 			System.out.println("Exception "+e);
