@@ -1,12 +1,11 @@
 package org.sample.dgraph;
 
 import io.dgraph.DgraphClient;
-import io.dgraph.Transaction;
+
 
 import java.util.Scanner;
 
-import org.sample.dgraph.model.Vertex;
-import org.sample.dgraph.operations.DgraphOperations;
+
 import org.sample.dgraph.util.DgraphConnection;
 import org.sample.dgraph.util.JsonResponseProcessor;
 
@@ -17,7 +16,7 @@ import org.sample.dgraph.util.JsonResponseProcessor;
 public class GraphDBProcessor {
 	
 	public static void main(String args[]) throws Exception {
-		Transaction txn = getGraphClient().newTransaction();
+		//Transaction txn = getGraphClient().newTransaction();
 		Scanner sc = new Scanner(System.in);
 		try {
 			System.out.println("Enter File name to process Json ::");
@@ -26,7 +25,7 @@ public class GraphDBProcessor {
 			responseProcessor.processJsonMessage(fileName);
 			
 			// Drop Data Base data from  DGraph
-			DgraphOperations dbOperations = new DgraphOperations();
+			/*DgraphOperations dbOperations = new DgraphOperations();
 			DgraphLoader dgraphLoader = new DgraphLoader();
 			dbOperations.dropDataBase(getGraphClient(), false);
 			
@@ -47,13 +46,13 @@ public class GraphDBProcessor {
 			}
 			System.out.println("SourceUid : "+sourceUid+" , destination Uid :"+destUid);
 			dbOperations.saveEdge(txn, sourceUid, destUid);
-			txn.commit();
+			txn.commit();*/
 		    System.out.println("Commit transaction completed");
 		} catch(Exception e) {
 			System.out.println("Unable to save data into DGraph "+e);
 		} finally {
-			txn.discard();
-			txn.close();
+			/*txn.discard();
+			txn.close();*/
 			sc.close();
 		}
 		
