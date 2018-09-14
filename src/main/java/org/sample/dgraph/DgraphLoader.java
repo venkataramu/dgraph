@@ -38,15 +38,17 @@ public class DgraphLoader {
 		}
 	}
 	
-	public String getVertex(DgraphClient dGraphClient, Vertex vertex) throws Exception {
+	public String getVertex(DgraphClient dGraphClient, String vertexId) throws Exception {
 		Transaction txn = dGraphClient.newTransaction();
 		try {
-			System.out.println("Get Vertex Query .... ");
+			
 			String query = "query vertexLoad($a: string){\n"+ "vertexLoad(func: eq(id, $a)) {\n" + "  id\n uid\n sourceType\n" +" }\n" + "}";
-			Map<String, String> vars = Collections.singletonMap("$a", vertex.getId());
+			Map<String, String> vars = Collections.singletonMap("$a", vertexId);
 			Response response =  txn.queryWithVars(query, vars);
 			Gson gson = new Gson();
+			System.out.println("response:: "+ response.toString());
 			JsonElement jsonElement = gson.fromJson(response.getJson().toStringUtf8(), JsonElement.class);
+			//System.out.println("jsonElement::: "+ jsonElement.toString());
 			if(jsonElement != null) {
 				JsonObject jsonObj = jsonElement.getAsJsonObject();
 				JsonElement jsonElements = jsonObj.get("vertexLoad");
