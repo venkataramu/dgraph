@@ -12,17 +12,13 @@ public class Vertex {
 	String ipAddress;
 	String uid;
 	
-	public Vertex(String id, String sourceType) {
+	public Vertex(String id, String sourceType, String ipAdd) {
 		this.id = id;
 		this.sourceType = sourceType;
 		this.uid = "_:"+id;
+		this.ipAddress = ipAdd;
 	}
 	
-	public Vertex(String id, String sourceType, String uid) {
-		this.id = id;
-		this.sourceType = sourceType;
-		this.uid = uid;
-	}
 	
 	public String getId() {
 		return id;
