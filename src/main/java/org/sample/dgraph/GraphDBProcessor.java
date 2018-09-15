@@ -21,8 +21,11 @@ public class GraphDBProcessor {
 		try {
 			System.out.println("Enter File name to process Json ::");
 			String fileName = sc.next();
+			
+			System.out.println("Enter Client Id: ");
+			long clientId = sc.nextLong();
 			JsonResponseProcessor responseProcessor = new JsonResponseProcessor();
-			responseProcessor.processJsonMessage(fileName);
+			responseProcessor.processJsonMessage(fileName, clientId);
 			
 			// Drop Data Base data from  DGraph
 			/*DgraphOperations dbOperations = new DgraphOperations();
