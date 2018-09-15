@@ -12,11 +12,12 @@ public class Vertex {
 	String ipAddress;
 	String uid;
 	
-	public Vertex(String id, String sourceType, String ipAdd) {
+	public Vertex(String id, String sourceType, String ipAdd, String name) {
 		this.id = id;
 		this.sourceType = sourceType;
 		this.uid = "_:"+id;
 		this.ipAddress = ipAdd;
+		this.name = name;
 	}
 	
 	
