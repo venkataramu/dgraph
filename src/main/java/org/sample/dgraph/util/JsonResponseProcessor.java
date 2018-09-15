@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.sample.dgraph.DgraphLoader;
@@ -33,7 +34,7 @@ import com.google.protobuf.ByteString;
  */
 public class JsonResponseProcessor {
 	
-	public void processJsonMessage(String fileName) throws Exception {
+	public void processJsonMessage(String fileName, long clientId) throws Exception {
 		try {
 			FileInputStream fIn = null;
 			File file = new File(fileName);
@@ -41,7 +42,7 @@ public class JsonResponseProcessor {
 			byte[] bytes = new byte[(int) file.length()];
 			fIn.read(bytes);
 			NetworkTopology response = processMessage(bytes);
-			processJsonData(response);
+			processJsonData(response, clientId);
 
 		} catch(Exception e) {
 			System.out.println("Exception ::: "+ e);
@@ -60,13 +61,13 @@ public class JsonResponseProcessor {
 		return response;
 	}
 	
-	public void processJsonData(NetworkTopology topology) throws Exception {
+	public void processJsonData(NetworkTopology topology, long clientId) throws Exception {
 		if(topology != null) {
 			if(topology.getL2links() != null) {
 				System.out.println("process json initiated");
 				DgraphLoader graphLoader = new DgraphLoader();
 				//PersonObject persObject = new PersonObject("Dgraph Sample");
-				Mutation mu  = null;
+				
 				DgraphClient dgraphClient = GraphDBProcessor.getGraphClient();
 				Transaction txn = null;
 				try {
@@ -75,31 +76,30 @@ public class JsonResponseProcessor {
 					dbOperations.dropDataBase(GraphDBProcessor.getGraphClient(), false);
 					/*System.out.println("dropped database");*/
 					//dbOperations.createSchema(GraphDBProcessor.getGraphClient());
-
+					long startTime = new Date().getTime();
 					System.out.println("schema created");
+					DgraphOperations dgraphOp = new DgraphOperations();	
 					for(Links link : topology.getL2links()) {
 						txn = dgraphClient.newTransaction();
-						long v1Id = getGraphIdByUniquenessOfOrphan(1110, link.getSrcMgmtIP());
-						long v2Id = getGraphIdByUniquenessOfOrphan(1110, link.getTgtMgmtIP());
+						long v1Id = getGraphIdByUniquenessOfOrphan(clientId, link.getSrcMgmtIP());
+						long v2Id = getGraphIdByUniquenessOfOrphan(clientId, link.getTgtMgmtIP());
 						
 						String srcVertexUid = graphLoader.getVertex(dgraphClient, String.valueOf(v1Id));
 						String tgtVertexUid = graphLoader.getVertex(dgraphClient, String.valueOf(v2Id));
 						List<Vertex> verticesList = new ArrayList<Vertex>();
 						if(srcVertexUid == null || tgtVertexUid == null) {
 							if(srcVertexUid == null) {
-								System.out.println("srcVertxUID is null");
-								Vertex srcVertex = new Vertex(String.valueOf(v1Id), "DEVICE", link.getSrcMgmtIP());				
+								Vertex srcVertex = new Vertex(String.valueOf(v1Id), "DEVICE", link.getSrcMgmtIP(), link.getSrcHostname());				
 								verticesList.add(srcVertex);				
 							}
 							if(tgtVertexUid == null) {
-								System.out.println("tgtVertxUID is null");
-								Vertex tgtVertex = new Vertex(String.valueOf(v2Id), "DEVICE", link.getTgtMgmtIP());
+								Vertex tgtVertex = new Vertex(String.valueOf(v2Id), "DEVICE", link.getTgtMgmtIP(), link.getTgtHostname());
 								verticesList.add(tgtVertex);				
 							}
 							Type type = new TypeToken<List<Vertex>>() {}.getType();
 							System.out.println("Entered to save data in to DGraph");
 							String  gsonDataString = new Gson().toJson(verticesList, type);
-							mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gsonDataString)).build();
+							Mutation mu = Mutation.newBuilder().setSetJson(ByteString.copyFromUtf8(gsonDataString)).build();
 							Assigned assigned = txn.mutate(mu);
 
 							if(srcVertexUid == null)
@@ -107,14 +107,16 @@ public class JsonResponseProcessor {
 							if(tgtVertexUid == null)
 								tgtVertexUid = assigned.getUidsMap().get(String.valueOf(v2Id));
 						}
-						System.out.println("Vertex processing completed");
-						DgraphOperations dgraphOp = new DgraphOperations();	
+						
 						dgraphOp.saveEdge(txn, srcVertexUid,tgtVertexUid);
-						txn.commit();
+						retryMutate(txn);
 					}
+					
+					System.out.println("Total time to save vertices and edges::"+ (new Date().getTime()-startTime));
 				}				
 				catch(Exception e) {
 					System.out.println("Unable to save data into DGraph "+e);
+					
 				} finally {
 					if(txn!=null) {
 						txn.discard();
@@ -134,5 +136,35 @@ public class JsonResponseProcessor {
 			return UUIDUtil.generateUniqueLongValue(seedStr);
 			
 		}
+	 
+	 
+	 public static void retryMutate(Transaction txn) throws Exception{
+	    	Throwable lastError = null;
+			int retries = 3;
+			boolean success = false;
+			
+			while(retries > 0 && !success) {			
+				retries--;
+				try {
+					 txn.commit();
+					success = true;
+				} catch (Throwable t) {
+					lastError = t;
+					System.out.println("Exception: "+ t.getMessage());
+				}
+				try {
+					if(!success) {
+						//Wait for 5 sec before attempting again
+						System.out.println("Exception: thread sleep: 5sec");
+						Thread.sleep(5000);
+					}
+				} catch(Throwable t) {
+				}
+			}
+			if(!success && lastError != null) {
+				System.out.println("Failed to process graph save request : " + lastError.getMessage());
+				throw new Exception("Failed to save");
+			}
+	    }
 
 }
